@@ -1,0 +1,138 @@
+/**
+ * Copyright (c) 2017-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: rgb(33, 175, 144);
+  --ifm-color-primary-darker: rgb(31, 165, 136);
+  --ifm-color-primary-darkest: rgb(26, 136, 112);
+  --ifm-color-primary-light: rgb(70, 203, 174);
+  --ifm-color-primary-lighter: rgb(102, 212, 189);
+  --ifm-color-primary-lightest: rgb(146, 224, 208);
+  --ifm-code-font-size: 95%;
+}
+
+.docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+html[data-theme='dark'] .docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom styles for Physical AI & Humanoid Robotics textbook */
+.hero--primary {
+  background: linear-gradient(135deg, #1a2a6c, #2a4d69, #4b86b4);
+}
+
+.hero__title {
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.hero__subtitle {
+  font-size: 1.5rem;
+  opacity: 0.9;
+}
+
+/* Custom sidebar styles */
+.menu__list-item-collapsible .menu__link--sublist {
+  font-weight: 600;
+}
+
+/* Code block styling */
+.code-block-error-line {
+  background-color: #ff000020;
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+  border-left: 3px solid #ff0000;
+}
+
+.code-block-success-line {
+  background-color: #00ff0020;
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+  border-left: 3px solid #00ff00;
+}
+
+/* Custom admonitions for robotics content */
+.admonition-robotics-tip {
+  border-color: #8ac926;
+}
+
+.admonition-robotics-warning {
+  border-color: #ffca3a;
+}
+
+.admonition-robotics-danger {
+  border-color: #ff595e;
+}
+
+/* Navigation styling */
+.navbar__title {
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+/* Footer styling */
+.footer--dark {
+  background: linear-gradient(135deg, #1a2a6c, #2a4d69);
+}
+
+/* Table styling for robotics parameters */
+.robo-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.robo-table th, .robo-table td {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.robo-table th {
+  background-color: var(--ifm-color-emphasis-200);
+  font-weight: 600;
+}
+
+/* API endpoint styling */
+.api-endpoint {
+  background-color: var(--ifm-code-background);
+  border-radius: var(--ifm-code-border-radius);
+  padding: var(--ifm-code-padding-vertical) var(--ifm-code-padding-horizontal);
+  font-family: var(--ifm-font-family-monospace);
+}
+
+/* Callout boxes for important concepts */
+.robo-callout {
+  background-color: #f0f8ff;
+  border-left: 4px solid #4b86b4;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 4px 4px 0;
+}
+
+html[data-theme='dark'] .robo-callout {
+  background-color: #1a2a6c30;
+}
+
+/* Kinematic diagram styling */
+.kinematic-diagram {
+  text-align: center;
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  background-color: var(--ifm-color-emphasis-100);
+}

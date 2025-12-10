@@ -1,0 +1,461 @@
+openapi: 3.0.3
+info:
+  title: Physical AI & Humanoid Robotics Textbook Platform API
+  description: API for the interactive textbook platform with RAG chatbot, difficulty adaptation, and bilingual support
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Creates a new user account with background information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+                - software_background_level
+                - hardware_background_level
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                password:
+                  type: string
+                  format: password
+                  description: User's password
+                name:
+                  type: string
+                  description: User's full name
+                software_background_level:
+                  type: string
+                  enum: [beginner, intermediate, advanced]
+                  description: User's software background level
+                hardware_background_level:
+                  type: string
+                  enum: [beginner, intermediate, advanced]
+                  description: User's hardware background level
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The created user ID
+                  email:
+                    type: string
+                    format: email
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid input
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      summary: Login a user
+      description: Authenticates a user and returns session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for authentication
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Invalid credentials
+
+  /content:
+    get:
+      summary: Get all textbook content
+      description: Retrieves all textbook content with filtering options
+      parameters:
+        - name: module_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by module ID
+        - name: week_number
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by week number
+        - name: difficulty_level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [beginner, intermediate, master]
+          description: Filter by difficulty level
+        - name: language
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [en, ur]
+            default: en
+          description: Language preference
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TextbookContent'
+        '401':
+          description: Unauthorized
+
+  /content/{id}:
+    get:
+      summary: Get specific content
+      description: Retrieves a specific piece of textbook content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+        - name: difficulty_level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [beginner, intermediate, master]
+          description: Difficulty level preference
+        - name: language
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [en, ur]
+            default: en
+          description: Language preference
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextbookContent'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Content not found
+
+  /chat:
+    post:
+      summary: Chat with the AI assistant
+      description: Sends a query to the RAG system and receives a response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: The user's question
+                context:
+                  type: string
+                  description: Optional highlighted text context
+                content_id:
+                  type: string
+                  description: Optional ID of content being referenced
+      responses:
+        '200':
+          description: Chat response generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The AI's response
+                  sources:
+                    type: array
+                    items:
+                      type: string
+                    description: Source documents used to generate the response
+                  query_id:
+                    type: string
+                    description: ID of the chat query for reference
+        '401':
+          description: Unauthorized
+
+  /progress:
+    get:
+      summary: Get user progress
+      description: Retrieves the user's progress across modules and content
+      responses:
+        '200':
+          description: Progress retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleProgress'
+                  overall_completion:
+                    type: number
+                    format: float
+                    description: Overall completion percentage (0-100)
+        '401':
+          description: Unauthorized
+
+  /progress/{content_id}:
+    post:
+      summary: Update content progress
+      description: Updates the progress for a specific content item
+      parameters:
+        - name: content_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID to update progress for
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - completion_percentage
+              properties:
+                completion_percentage:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 100
+                  description: Completion percentage (0-100)
+                difficulty_level:
+                  type: string
+                  enum: [beginner, intermediate, master]
+                  description: Difficulty level used
+      responses:
+        '200':
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProgress'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Content not found
+
+components:
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        software_background_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        hardware_background_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        difficulty_preference:
+          type: string
+          enum: [beginner, intermediate, master]
+        language_preference:
+          type: string
+          enum: [en, ur]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TextbookContent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique content identifier
+        title:
+          type: string
+          description: Content title
+        module_id:
+          type: string
+          description: ID of the parent module
+        week_number:
+          type: integer
+          description: Week number within the course
+        content_type:
+          type: string
+          enum: [text, video, exercise, quiz]
+          description: Type of content
+        content:
+          type: string
+          description: The actual content in the requested language and difficulty
+        prerequisite_ids:
+          type: array
+          items:
+            type: string
+          description: IDs of prerequisite content
+        embedding_token_size:
+          type: integer
+          description: Token size for content embeddings (default: 150)
+        embedding_overlap_size:
+          type: integer
+          description: Overlap size for content embeddings (default: 35)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Module:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique module identifier
+        title:
+          type: string
+          description: Module title
+        description:
+          type: string
+          description: Module description
+        module_number:
+          type: integer
+          description: Sequential module number
+        weeks_count:
+          type: integer
+          description: Number of weeks in the module
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ModuleProgress:
+      type: object
+      properties:
+        module_id:
+          type: string
+          description: Module identifier
+        title:
+          type: string
+          description: Module title
+        completion_percentage:
+          type: number
+          format: float
+          description: Module completion percentage (0-100)
+        content_progress:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentProgress'
+
+    ContentProgress:
+      type: object
+      properties:
+        content_id:
+          type: string
+          description: Content identifier
+        title:
+          type: string
+          description: Content title
+        completion_percentage:
+          type: number
+          format: float
+          description: Content completion percentage (0-100)
+        difficulty_level:
+          type: string
+          enum: [beginner, intermediate, master]
+          description: Difficulty level used
+
+    UserProgress:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique progress identifier
+        user_id:
+          type: string
+          description: User identifier
+        content_id:
+          type: string
+          description: Content identifier
+        completion_percentage:
+          type: number
+          format: float
+          description: Completion percentage (0-100)
+        difficulty_level:
+          type: string
+          enum: [beginner, intermediate, master]
+          description: Difficulty level used
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        time_spent_seconds:
+          type: integer
+          description: Time spent on content in seconds
