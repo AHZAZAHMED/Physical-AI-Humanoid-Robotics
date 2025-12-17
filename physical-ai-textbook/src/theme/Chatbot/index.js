@@ -119,21 +119,33 @@ const ChatbotInner = ({ initialIsDarkTheme }) => {
     }
   };
 
-  // Simulate backend response - in real implementation, call your API
+  // Call the backend RAG service to get a proper response
   const simulateBackendResponse = async (question) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Call the backend chat service (as specified in the task)
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: question,
+          session_id: 'web-session-' + Date.now()  // Generate a session ID for web
+        }),
+      });
 
-    // Simple response logic - in real implementation, call your backend API
-    const responses = [
-      "Based on the textbook content, this topic covers important concepts in humanoid robotics.",
-      "That's an interesting question about Physical AI! The textbook covers this in detail.",
-      "I found relevant information in the textbook: This topic is covered in Module 2 on Simulation.",
-      "According to the Physical AI & Humanoid Robotics textbook, this concept is fundamental to understanding robot perception.",
-      "Great question! The textbook explains this concept in Module 3: NVIDIA Isaac Platform."
-    ];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    return responses[Math.floor(Math.random() * responses.length)];
+      const data = await response.json();
+
+      // Return the response from the chat endpoint
+      return data.response;
+    } catch (error) {
+      console.error('Error calling chat service:', error);
+      return "I'm having trouble connecting to the chat service. Please make sure the backend service is running at http://localhost:8000/chat. For now, I can only provide a simulated response: Based on the textbook content, this topic covers important concepts in humanoid robotics.";
+    }
   };
 
   return (

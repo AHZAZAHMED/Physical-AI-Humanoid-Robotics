@@ -50,6 +50,21 @@ const config = {
     ],
   ],
 
+  plugins: [
+    // Plugin to redirect from root path to docs
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {
+            to: '/docs/intro', // Redirect to the intro page of docs
+            from: '/', // Redirect from site root
+          },
+        ],
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -69,7 +84,12 @@ const config = {
             label: 'Textbook',
           },
           {
-            href: 'https://github.com/ahzaz/physical-ai-textbook',
+            to: '/auth', // This would link to an authentication page
+            label: 'Login/Signup',
+            position: 'right',
+          },
+          {
+            href: 'https://github.com/AHZAZAHMED/physical-ai-textbook',
             label: 'GitHub',
             position: 'right',
           },
@@ -92,7 +112,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/ahzaz/physical-ai-textbook',
+                href: 'https://github.com/AHZAZAHMED/physical-ai-textbook',
               },
             ],
           },
@@ -101,7 +121,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/ahzaz/physical-ai-textbook',
+                href: 'https://github.com/AHZAZAHMED/physical-ai-textbook',
               },
             ],
           },

@@ -1,0 +1,12 @@
+{
+  "qdrant": {
+    "command": "uvx",
+    "args": ["mcp-server-qdrant"],
+    "env": {
+      "QDRANT_URL": "https://dda1fdab-d1f4-4b10-9483-77fc01aa9c55.us-east4-0.gcp.cloud.qdrant.io:6333",
+      "QDRANT_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.pcX4lcFHbGFNIeivUHS02-Va9npeQ2n0stttogk5k4s",
+      "COLLECTION_NAME": "book",
+      "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
+    }
+  }
+}

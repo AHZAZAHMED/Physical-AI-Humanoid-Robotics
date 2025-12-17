@@ -1,0 +1,240 @@
+openapi: 3.0.0
+info:
+  title: Authentication API
+  description: API for user authentication in the Physical AI Textbook platform
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Creates a new user account with email, password, and background information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid input or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/login:
+    post:
+      summary: Login user
+      description: Authenticates user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: User successfully logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid credentials or bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: Invalidates the current user session
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/me:
+    get:
+      summary: Get current user
+      description: Returns information about the currently authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          description: User's password
+          example: "securePassword123"
+        backgroundInfo:
+          type: string
+          maxLength: 1000
+          description: User's background information (hardware/software expertise)
+          example: "Software engineer with robotics experience"
+    RegisterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          example: "user-uuid-123"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        backgroundInfo:
+          type: string
+          description: User's background information
+          example: "Software engineer with robotics experience"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2025-12-16T10:00:00Z"
+        emailVerified:
+          type: boolean
+          description: Whether email is verified
+          example: false
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        password:
+          type: string
+          description: User's password
+          example: "securePassword123"
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        session:
+          type: object
+          properties:
+            token:
+              type: string
+              description: Session token
+              example: "session-token-123"
+            expiresAt:
+              type: string
+              format: date-time
+              description: Session expiration time
+              example: "2025-12-17T10:00:00Z"
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          example: "user-uuid-123"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        backgroundInfo:
+          type: string
+          description: User's background information
+          example: "Software engineer with robotics experience"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2025-12-16T10:00:00Z"
+        emailVerified:
+          type: boolean
+          description: Whether email is verified
+          example: false
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid credentials"
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_CREDENTIALS"

@@ -1,5 +1,5 @@
 ---
-slug: /
+slug: /docs/intro
 title: Introduction to Physical AI & Humanoid Robotics
 ---
 

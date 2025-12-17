@@ -43,6 +43,8 @@ echo "Dependencies installed successfully!"
 
 # Start the backend server
 echo "Starting RAG backend server..."
-uvicorn rag_service:app --host 0.0.0.0 --port 8000
+cd ..
+# Go back to project root and start backend from there to ensure proper path resolution
+cd backend && source venv/bin/activate && exec uvicorn rag_service:app --host 0.0.0.0 --port 8000
 
 echo "Backend server stopped."

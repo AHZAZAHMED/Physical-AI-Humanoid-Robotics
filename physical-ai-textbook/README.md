@@ -58,9 +58,25 @@ cp .env .env.local
 
 ### Local Development
 
+For development with both frontend and backend services running simultaneously:
+
 ```bash
-# Start the development server
+# Start both frontend and backend services with one command
+npm run dev
+
+# This will start:
+# - Frontend (Docusaurus) on http://localhost:3000
+# - Backend (FastAPI) on http://localhost:8000
+```
+
+Alternatively, you can run services separately:
+
+```bash
+# Start only the frontend
 npm start
+
+# Or start only the backend (from project root)
+npm run start:backend
 
 # Open http://localhost:3000 to view the textbook
 ```

@@ -12,13 +12,8 @@ import logging
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
-import hashlib
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import os
-from dotenv import load_dotenv
 import uvicorn
 
 from sentence_transformers import SentenceTransformer
@@ -26,18 +21,8 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.models import Distance, VectorParams
 
-# Import the LLM service
-from src.services.llm_service import llm_service
-
 # Load environment variables
 load_dotenv()
-
-# Database connection setup for Neon
-def get_db_connection():
-    conn = psycopg2.connect(
-        os.getenv("NEON_DATABASE_URL").replace("postgresql://", "postgresql://", 1)
-    )
-    return conn
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -62,8 +47,6 @@ else:
     # Use local instance
     client = QdrantClient(host="localhost", port=6333)
 
-logger.info("Qdrant client loaded successfully")
-
 # Collection name for textbook content
 COLLECTION_NAME = "textbook_content"
 
@@ -75,7 +58,7 @@ except:
     logger.info(f"Creating collection '{COLLECTION_NAME}'")
     client.create_collection(
         collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(size=768, distance=Distance.COSINE),  # e5-base-v2 produces 768-dim vectors
+        vectors_config=VectorParams(size=768, distance=Distance.COSINE),
     )
     logger.info(f"Collection '{COLLECTION_NAME}' created successfully")
 
@@ -107,23 +90,6 @@ class AnswerResponse(BaseModel):
     question: str
     answer: str
     sources: List[SearchResult]
-
-# Authentication models
-class UserRegistration(BaseModel):
-    email: str
-    password: str
-    softwareBackground: str
-    hardwareBackground: str
-
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-class UserResponse(BaseModel):
-    id: int
-    email: str
-    softwareBackground: str
-    hardwareBackground: str
 
 # Text splitter utility
 def split_text(text: str, chunk_size: int = 150, overlap: int = 35) -> List[str]:
@@ -165,6 +131,7 @@ async def index_content(request: IndexContentRequest):
                 # Generate embedding
                 embedding = model.encode([prefixed_text])[0].tolist()
 
+                # Create a point for Qdrant
                 point = models.PointStruct(
                     id=point_id,
                     vector=embedding,
@@ -181,6 +148,7 @@ async def index_content(request: IndexContentRequest):
             collection_name=request.collection_name,
             points=points
         )
+
         logger.info(f"Indexed {len(points)} content chunks into {request.collection_name}")
 
         return {
@@ -233,8 +201,9 @@ async def search_knowledge_base(request: QuestionRequest):
 @app.post("/answer_question", response_model=AnswerResponse)
 async def answer_question(request: QuestionRequest):
     """
-    Answer a question using the knowledge base and act as a tutor
-    This implementation creates detailed, educational responses based on retrieved content
+    Answer a question using the knowledge base and LLM
+    This is a simplified implementation - in a real system, you would integrate
+    with an LLM service like OpenAI or Gemini to generate answers based on retrieved content
     """
     try:
         # First, search the knowledge base
@@ -243,34 +212,17 @@ async def answer_question(request: QuestionRequest):
         if not search_results:
             return AnswerResponse(
                 question=request.question,
-                answer="I couldn't find relevant information in the textbook to answer your question. Please check if your question is related to Physical AI & Humanoid Robotics topics covered in the textbook.",
+                answer="I couldn't find relevant information in the textbook to answer your question.",
                 sources=[]
             )
 
-        # Create a detailed tutor-style response using the retrieved content
-        context = "\n\n".join([f"Source {i+1}: {result.text}" for i, result in enumerate(search_results)])
+        # In a real implementation, you would send the question and search results
+        # to an LLM to generate a comprehensive answer
+        # For this example, we'll just return the top result as the answer
 
-        # Use the LLM service to generate a comprehensive tutor-style response
-        try:
-            answer = llm_service.generate_tutor_response(
-                question=request.question,
-                context=context,
-                sources=[result.metadata.get("source_file", "unknown") for result in search_results]
-            )
-        except Exception as llm_error:
-            logger.error(f"Error calling LLM service: {str(llm_error)}")
-            # Fallback to original response format if LLM service fails
-            answer_parts = [
-                f"Great question about '{request.question}'!",
-                "",
-                "Based on the textbook content, here's a detailed explanation:",
-                "",
-                context[:1000] + "..." if len(context) > 1000 else context,  # Limit length
-                "",
-                "This concept is fundamental to understanding Physical AI and Humanoid Robotics.",
-                "I recommend reviewing the source materials for additional details and examples."
-            ]
-            answer = "\n".join(answer_parts)
+        # For demonstration purposes, we'll create a simple answer based on the retrieved content
+        context = "\n".join([result.text for result in search_results[:2]])  # Use top 2 results
+        answer = f"Based on the textbook content, here's what I found regarding your question '{request.question}':\n\n{context[:500]}..."  # Truncate for demo
 
         return AnswerResponse(
             question=request.question,
@@ -288,112 +240,6 @@ async def health_check():
     Health check endpoint
     """
     return {"status": "healthy", "message": "RAG service is running"}
-
-# Authentication endpoints
-@app.post("/auth/register", response_model=UserResponse)
-async def register_user(user_data: UserRegistration):
-    """
-    Register a new user with email, password, and background information
-    """
-    try:
-        # Hash the password
-        password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
-
-        # Connect to the database
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Check if user already exists
-        cur.execute("SELECT * FROM users WHERE email = %s", (user_data.email,))
-        existing_user = cur.fetchone()
-
-        if existing_user:
-            raise HTTPException(status_code=400, detail="User with this email already exists")
-
-        # Create the users table if it doesn't exist
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password_hash VARCHAR(255) NOT NULL,
-                software_background VARCHAR(255),
-                hardware_background VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        # Insert the new user
-        cur.execute("""
-            INSERT INTO users (email, password_hash, software_background, hardware_background)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id, email, software_background, hardware_background
-        """, (user_data.email, password_hash, user_data.softwareBackground, user_data.hardwareBackground))
-
-        new_user = cur.fetchone()
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        return UserResponse(
-            id=new_user['id'],
-            email=new_user['email'],
-            softwareBackground=new_user['software_background'],
-            hardwareBackground=new_user['hardware_background']
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error registering user: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
-
-@app.post("/auth/login")
-async def login_user(user_data: UserLogin):
-    """
-    Login a user with email and password
-    """
-    try:
-        # Hash the password
-        password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
-
-        # Connect to the database
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Find the user
-        cur.execute("SELECT * FROM users WHERE email = %s AND password_hash = %s",
-                   (user_data.email, password_hash))
-        user = cur.fetchone()
-
-        cur.close()
-        conn.close()
-
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-
-        return {
-            "message": "Login successful",
-            "user": {
-                "id": user['id'],
-                "email": user['email'],
-                "softwareBackground": user['software_background'],
-                "hardwareBackground": user['hardware_background']
-            }
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error logging in user: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error logging in user: {str(e)}")
-
-@app.get("/auth/me")
-async def get_current_user(request: Request):
-    """
-    Get current user info (placeholder - would require token validation in real implementation)
-    """
-    # In a real implementation, you would validate a JWT token here
-    # For this demo, we'll return a placeholder response
-    return {"message": "Authentication service working"}
 
 # For local development
 if __name__ == "__main__":
