@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-This feature addresses multiple fixes and enhancements for the Physical AI & Humanoid Robotics Textbook platform, including routing fixes, RAG pipeline improvements, authentication implementation, personalization features, and translation capabilities.
+This feature addresses multiple fixes and enhancements for the Physical AI & Humanoid Robotics Textbook platform, including routing fixes, chatbot improvements, authentication implementation, personalization features, and translation capabilities.
 
 ## User Scenarios & Testing
 
@@ -10,9 +10,9 @@ This feature addresses multiple fixes and enhancements for the Physical AI & Hum
 - As a user, I want to access the textbook homepage at `http://localhost:3000/physical-ai-textbook` and be automatically redirected to the book content
 - Acceptance: When I navigate to the root URL, I'm immediately taken to the textbook content without seeing a 404 error
 
-### Scenario 2: RAG Chatbot Interaction
-- As a user, I want to ask detailed questions about Physical AI concepts and receive comprehensive answers with proper citations
-- Acceptance: When I ask a question, the chatbot provides a detailed explanation based on the textbook content and cites the specific source
+### Scenario 2: Chatbot Interaction
+- As a user, I want to ask detailed questions about Physical AI concepts and receive comprehensive answers
+- Acceptance: When I ask a question, the chatbot provides a detailed explanation about Physical AI & Humanoid Robotics topics
 
 ### Scenario 3: User Registration
 - As a new user, I want to register with my software and hardware background information to get personalized content
@@ -33,17 +33,17 @@ This feature addresses multiple fixes and enhancements for the Physical AI & Hum
 - The system shall ensure no 404 errors occur when accessing the root path
 - The system shall maintain the correct base URL as configured in docusaurus.config.js
 
-### FR-2: RAG Embedding Pipeline
-- The system shall process all `.md` and `.mdx` files in the docs directory
-- The system shall embed the content using appropriate embedding models
-- The system shall store embeddings in the Qdrant database
-- The system shall verify successful indexing of all textbook content
+### FR-2: Chatbot Enhancement
+- The system shall process user questions and provide comprehensive answers about Physical AI & Humanoid Robotics
+- The system shall integrate with an LLM to generate educational responses
+- The system shall maintain conversational context during interactions
+- The system shall provide helpful responses to textbook-related questions
 
 ### FR-3: Enhanced Chatbot Responses
-- The system shall provide detailed answers to user questions using retrieved context
+- The system shall provide detailed answers to user questions
 - The system shall act as a tutor, explaining concepts comprehensively
-- The system shall continue to cite sources as references in responses
-- The system shall improve upon the current basic citation-only responses
+- The system shall provide educational responses appropriate for textbook learners
+- The system shall improve upon basic responses with detailed explanations
 
 ### FR-4: Authentication Implementation
 - The system shall integrate Better-Auth for user authentication
@@ -79,13 +79,13 @@ This feature addresses multiple fixes and enhancements for the Physical AI & Hum
 
 - User: Registered users with background information (software/hardware)
 - Content: Textbook chapters and sections in markdown format
-- Embeddings: Vector representations of textbook content stored in Qdrant
+- Chat History: Conversation context maintained during user interactions
 - Translation Cache: Cached Urdu translations for each chapter
 - Expertise Level: User-selected difficulty level (Beginner/Intermediate/Advanced)
 
 ## Assumptions
 
-- Qdrant database is available and properly configured for the RAG pipeline
+- An LLM service is available and properly configured for the chatbot
 - An AI API is available for Urdu translation functionality
 - Better-Auth can be integrated with the Docusaurus platform
 - Users have basic familiarity with the platform navigation
@@ -93,7 +93,7 @@ This feature addresses multiple fixes and enhancements for the Physical AI & Hum
 
 ## Dependencies
 
-- Qdrant database for RAG embeddings
+- LLM service for chatbot responses
 - AI API for Urdu translation
 - Better-Auth for authentication
 - Docusaurus framework for the platform

@@ -20,6 +20,7 @@ const ChatbotInner = ({ initialIsDarkTheme }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connected'); // 'connected', 'disconnected', 'error'
 
   // Listen for color mode changes
   useEffect(() => {
@@ -64,7 +65,24 @@ const ChatbotInner = ({ initialIsDarkTheme }) => {
         isBot: true,
       }
     ]);
+
+    // Check initial connection status
+    checkConnectionStatus();
   }, []);
+
+  // Function to check connection status
+  const checkConnectionStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/chat/health');
+      if (response.ok) {
+        setConnectionStatus('connected');
+      } else {
+        setConnectionStatus('error');
+      }
+    } catch (error) {
+      setConnectionStatus('disconnected');
+    }
+  };
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -108,9 +126,18 @@ const ChatbotInner = ({ initialIsDarkTheme }) => {
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
+      let errorMessageText = "Sorry, I encountered an error processing your request. Please try again.";
+
+      // Provide more specific error messages based on connection status
+      if (connectionStatus === 'disconnected') {
+        errorMessageText = "I'm having trouble connecting to the chat service. Please make sure the backend service is running at http://localhost:8000/chat. Would you like to try again?";
+      } else if (connectionStatus === 'error') {
+        errorMessageText = "There was an error with the chat service. The service may be temporarily unavailable. Please try again in a moment.";
+      }
+
       const errorMessage = {
         id: Date.now() + 1,
-        text: "Sorry, I encountered an error processing your request. Please try again.",
+        text: errorMessageText,
         isBot: true,
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -119,32 +146,61 @@ const ChatbotInner = ({ initialIsDarkTheme }) => {
     }
   };
 
-  // Call the backend RAG service to get a proper response
+  // Call the backend chat service to get a proper response with retry logic
   const simulateBackendResponse = async (question) => {
-    try {
-      // Call the backend chat service (as specified in the task)
-      const response = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: question,
-          session_id: 'web-session-' + Date.now()  // Generate a session ID for web
-        }),
-      });
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 second
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Call the backend chat service (as specified in the task)
+        const response = await fetch('http://localhost:8000/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: question,
+            session_id: 'web-session-' + Date.now()  // Generate a session ID for web
+          }),
+        });
+
+        if (!response.ok) {
+          // If it's a client error (4xx), don't retry
+          if (response.status >= 400 && response.status < 500) {
+            throw new Error(`Client error: ${response.status} ${response.statusText}`);
+          }
+          // For server errors (5xx), continue to retry
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Update connection status to connected if successful
+        setConnectionStatus('connected');
+
+        // Return the response from the chat endpoint
+        return data.response;
+      } catch (error) {
+        console.error(`Attempt ${attempt + 1} failed:`, error.message);
+
+        // Update connection status based on error type
+        if (error.message.includes('fetch') || error.message.includes('network')) {
+          setConnectionStatus('disconnected');
+        } else {
+          setConnectionStatus('error');
+        }
+
+        // If this is the last attempt, throw the error to be handled by the caller
+        if (attempt === maxRetries - 1) {
+          console.error('All retry attempts failed');
+          throw error;
+        }
+
+        // Wait before retrying (exponential backoff)
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-
-      const data = await response.json();
-
-      // Return the response from the chat endpoint
-      return data.response;
-    } catch (error) {
-      console.error('Error calling chat service:', error);
-      return "I'm having trouble connecting to the chat service. Please make sure the backend service is running at http://localhost:8000/chat. For now, I can only provide a simulated response: Based on the textbook content, this topic covers important concepts in humanoid robotics.";
     }
   };
 
@@ -173,7 +229,16 @@ const ChatbotInner = ({ initialIsDarkTheme }) => {
       {isOpen && (
         <div className={`${styles.chatContainer} ${isDarkTheme ? styles.dark : styles.light}`}>
           <div className={styles.chatHeader}>
-            <h3>Physical AI Assistant</h3>
+            <div className={styles.chatHeaderContent}>
+              <h3>Physical AI Assistant</h3>
+              <div className={`${styles.connectionIndicator} ${styles[connectionStatus]}`}>
+                <span className={styles.connectionDot}></span>
+                <span className={styles.connectionText}>
+                  {connectionStatus === 'connected' ? 'Online' :
+                   connectionStatus === 'disconnected' ? 'Offline' : 'Error'}
+                </span>
+              </div>
+            </div>
             <button
               className={styles.closeButton}
               onClick={toggleChat}

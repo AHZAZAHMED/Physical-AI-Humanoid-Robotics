@@ -3,6 +3,9 @@ Main FastAPI application for the Physical AI Textbook Platform
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from src.api import auth, chat, health
 from src.middleware.auth import AuthMiddleware
 from src.db.connection import init_db
@@ -12,11 +15,17 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="Physical AI Textbook Platform API",
     description="Backend API for the Physical AI & Humanoid Robotics Textbook Platform",
     version="1.0.0"
 )
+
+# Set up rate limit handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Initialize database connection
 init_db()

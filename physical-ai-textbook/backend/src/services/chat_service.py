@@ -9,7 +9,6 @@ import uuid
 from sqlalchemy.orm import Session
 
 from src.auth.models_db import User
-from src.rag.retriever import get_relevant_content
 from src.db.connection import get_db
 
 # Import the LLM service
@@ -97,9 +96,9 @@ class ChatService:
         session.add_message("user", content)
         return session
 
-    def generate_response(self, session_id: str, user_message: str, top_k: int = 5) -> str:
+    def generate_response(self, session_id: str, user_message: str) -> str:
         """
-        Generate a response based on the user message and conversation context
+        Generate a response based on the user message
         """
         session = self.get_session(session_id)
         if not session:
@@ -108,35 +107,18 @@ class ChatService:
         # Add the user's message to the session
         session.add_message("user", user_message)
 
-        # Retrieve relevant content from the RAG system
-        try:
-            relevant_chunks = get_relevant_content(user_message, top_k=top_k)
-        except Exception as e:
-            # If RAG retrieval fails, return an error message
-            error_response = f"Sorry, I encountered an error retrieving information: {str(e)}"
-            session.add_message("assistant", error_response)
-            return error_response
-
         # Get conversation history for context
         conversation_history = self.get_conversation_context(session_id, num_messages=5)
 
-        # If we have relevant content, use the LLM to generate a contextual response
-        if relevant_chunks:
-            context = "\n\n".join([chunk["text"] for chunk in relevant_chunks[:3]])  # Use top 3 results
-
-            # Use the LLM service to generate a comprehensive response
-            try:
-                response = llm_service.generate_response(
-                    prompt=user_message,
-                    context=context,
-                    conversation_history=conversation_history
-                )
-            except Exception as llm_error:
-                # Fallback to the original response format if LLM service fails
-                logger.error(f"Error calling LLM service: {str(llm_error)}")
-                response = f"Based on the textbook content, here's what I found regarding '{user_message}':\n\n{context[:1000]}..."  # Limit response length
-        else:
-            response = f"I couldn't find specific information about '{user_message}' in the textbook. Please check if your question relates to Physical AI & Humanoid Robotics topics covered in the textbook."
+        # Use the LLM service to generate a response
+        try:
+            response = llm_service.generate_general_response(
+                question=user_message
+            )
+        except Exception as llm_error:
+            # Fallback to the original response format if LLM service fails
+            logger.error(f"Error calling LLM service: {str(llm_error)}")
+            response = f"I received your question: '{user_message}'. As a Physical AI & Humanoid Robotics assistant, I'm here to help. Please try again later for a detailed response."
 
         # Add the assistant's response to the session
         session.add_message("assistant", response)

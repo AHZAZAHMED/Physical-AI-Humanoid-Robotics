@@ -1,7 +1,7 @@
 # Implementation Plan: Physical AI Textbook Platform Enhancements
 
 ## Overview
-This plan outlines the implementation approach for the Physical AI & Humanoid Robotics Textbook platform enhancements, including routing fixes, RAG pipeline improvements, authentication, personalization, and translation features.
+This plan outlines the implementation approach for the Physical AI & Humanoid Robotics Textbook platform enhancements, including routing fixes, chatbot improvements, authentication, personalization, and translation features.
 
 ## Implementation Tasks
 
@@ -11,20 +11,15 @@ This plan outlines the implementation approach for the Physical AI & Humanoid Ro
    - Test redirect functionality
    - Verify no 404 errors on homepage access
 
-### Phase 2: RAG Pipeline Enhancement
-2. **Verify Qdrant Integration**
-   - Check if textbook content is indexed in Qdrant
-   - Identify missing or unindexed documents
+### Phase 2: Chatbot Enhancement
+2. **Update Chatbot Integration**
+   - Verify LLM service integration is working properly
+   - Test chatbot response quality and functionality
 
-3. **Execute Embedding Ingestion**
-   - Create/modify script to process all `.md` and `.mdx` files
-   - Generate embeddings for textbook content
-   - Store embeddings in Qdrant database
-
-4. **Update Chatbot System Prompt**
-   - Modify system prompt to provide detailed explanations
-   - Ensure responses act as a tutor using context
-   - Maintain source citation functionality
+3. **Enhance Chatbot Responses**
+   - Update system prompt to provide detailed explanations
+   - Ensure responses act as a tutor for textbook learners
+   - Improve response quality and educational value
 
 ### Phase 3: Authentication Implementation
 5. **Integrate Better-Auth**
@@ -67,13 +62,10 @@ This plan outlines the implementation approach for the Physical AI & Humanoid Ro
 - Modify `docusaurus.config.js` to include a custom route that redirects from `/` to `/docs`
 - Use Docusaurus' `onDuplicateRoutes` or custom plugin for redirect
 
-### RAG Pipeline
-- Create a Node.js script that:
-  - Reads all markdown files from the docs directory
-  - Processes content using appropriate chunking strategy
-  - Generates embeddings using the configured model
-  - Stores in Qdrant with metadata
+### Chatbot Enhancement
 - Update the chatbot component to use enhanced system prompt
+- Improve response generation logic to provide more educational responses
+- Enhance conversation context management
 
 ### Authentication
 - Install `better-auth` package
@@ -92,7 +84,7 @@ This plan outlines the implementation approach for the Physical AI & Humanoid Ro
 - Create translation persistence mechanism
 
 ## Risk Assessment
-- Qdrant database availability and configuration
-- API costs for translation and embedding services
+- LLM service availability and configuration
+- API costs for translation and AI services
 - Complexity of content personalization filtering
 - Authentication integration with static site generator

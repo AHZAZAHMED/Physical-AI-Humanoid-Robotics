@@ -26,10 +26,29 @@ class LLMService:
         # Configure the API key
         genai.configure(api_key=api_key)
 
-        # Initialize the model (using gemini-pro as recommended)
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Try to initialize with different models in order of preference
+        model_names = [
+            'models/gemini-1.5-flash',
+            'models/gemini-1.5-pro',
+            'models/gemini-pro',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-pro'
+        ]
 
-        logger.info("LLM Service initialized with Google Gemini API")
+        self.model = None
+        for model_name in model_names:
+            try:
+                self.model = genai.GenerativeModel(model_name)
+                logger.info(f"LLM Service initialized with Google Gemini API using model: {model_name}")
+                break
+            except Exception as e:
+                logger.warning(f"Failed to initialize model {model_name}: {str(e)}")
+                continue
+
+        if self.model is None:
+            logger.error("Failed to initialize any Gemini model, falling back to basic response mechanism")
+            # We'll handle this in the generation methods
 
     def generate_response(self,
                          prompt: str,
@@ -40,7 +59,7 @@ class LLMService:
 
         Args:
             prompt: The main question or prompt from the user
-            context: Retrieved context from the vector database
+            context: Additional context for the response
             conversation_history: List of previous conversation turns
 
         Returns:
@@ -58,8 +77,8 @@ class LLMService:
 
         except Exception as e:
             logger.error(f"Error calling Gemini API: {str(e)}")
-            # Return a fallback response
-            return self._get_fallback_response(prompt)
+            # Return a fallback response, including context if available
+            return self._get_fallback_response(prompt, context)
 
     def _build_prompt(self,
                      prompt: str,
@@ -70,7 +89,7 @@ class LLMService:
 
         Args:
             prompt: The main question or prompt from the user
-            context: Retrieved context from the vector database
+            context: Additional context for the response
             conversation_history: List of previous conversation turns
 
         Returns:
@@ -102,17 +121,24 @@ class LLMService:
 
         return "\n".join(parts)
 
-    def _get_fallback_response(self, prompt: str) -> str:
+    def _get_fallback_response(self, prompt: str, context: str = None) -> str:
         """
         Generate a fallback response when the LLM API is unavailable
 
         Args:
             prompt: The original user prompt
+            context: Additional context for the response
 
         Returns:
             Fallback response
         """
-        return f"I'm having trouble generating a detailed response right now. Based on your question '{prompt}', I recommend checking the relevant sections in the Physical AI & Humanoid Robotics textbook for more information. Please try again later when the service is available."
+        if context:
+            # If we have context, provide a response based on the retrieved content
+            context_preview = context[:500]  # Limit the context preview
+            return f"Based on the textbook content, here's what I found regarding '{prompt}':\n\n{context_preview}...\n\nFor more detailed information, please refer to the relevant sections in the Physical AI & Humanoid Robotics textbook."
+        else:
+            # If no context, provide a generic response
+            return f"I'm having trouble generating a detailed response right now. Based on your question '{prompt}', I recommend checking the relevant sections in the Physical AI & Humanoid Robotics textbook for more information. Please try again later when the service is available."
 
     def generate_tutor_response(self,
                                question: str,
@@ -123,7 +149,7 @@ class LLMService:
 
         Args:
             question: The question from the student
-            context: Retrieved context from the vector database
+            context: Additional context for the response
             sources: List of sources used in the response
 
         Returns:
@@ -155,8 +181,36 @@ class LLMService:
 
         except Exception as e:
             logger.error(f"Error generating tutor response: {str(e)}")
-            return self._get_fallback_response(question)
+            return self._get_fallback_response(question, context)
 
+
+    def generate_general_response(self, question: str) -> str:
+        """
+        Generate a general response to a question without specific context
+
+        Args:
+            question: The question from the user
+
+        Returns:
+            General response from the LLM
+        """
+        try:
+            # Build a general prompt for the question
+            general_prompt = f"""
+            You are an expert assistant for Physical AI and Humanoid Robotics.
+            Please answer the following question: "{question}"
+
+            Provide a clear, educational response that addresses the user's question.
+            If the question relates to Physical AI & Humanoid Robotics, provide relevant information.
+            If you're not certain about specific details, acknowledge the limitation but provide general guidance.
+            """
+
+            response = self.model.generate_content(general_prompt)
+            return response.text if response.text else "I received your question and I'm ready to help with Physical AI & Humanoid Robotics topics. For detailed textbook content, please refer to the relevant sections in the textbook."
+
+        except Exception as e:
+            logger.error(f"Error generating general response: {str(e)}")
+            return f"I received your question: '{question}'. As a Physical AI & Humanoid Robotics assistant, I'm here to help. Please try again later for a detailed response."
 
 # Global instance for use in other modules
 llm_service = LLMService()

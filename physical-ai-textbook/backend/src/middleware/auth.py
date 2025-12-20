@@ -37,10 +37,8 @@ class AuthMiddleware:
             "/auth/register",
             "/auth/login",
             "/chat",
-            "/chat/health",
-            "/index_content",
-            "/search",
-            "/answer_question"
+            "/chat/",  # Include both with and without trailing slash
+            "/chat/health"
         ]
 
         # Check if the current route is public

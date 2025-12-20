@@ -30,7 +30,6 @@ async def detailed_health_check() -> Dict:
         "status": "healthy",
         "checks": {
             "database": {"status": "connected", "timestamp": datetime.utcnow().isoformat()},
-            "qdrant": {"status": "connected", "timestamp": datetime.utcnow().isoformat()},
             "api": {"status": "responsive", "timestamp": datetime.utcnow().isoformat()}
         },
         "timestamp": datetime.utcnow().isoformat(),

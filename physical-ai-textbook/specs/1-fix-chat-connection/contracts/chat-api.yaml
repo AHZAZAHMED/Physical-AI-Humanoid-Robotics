@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Physical AI Textbook Platform - Chat API
+  description: API for chatbot functionality in the Physical AI & Humanoid Robotics Textbook Platform
+  version: 1.0.0
+  contact:
+    name: Physical AI Textbook Team
+    email: support@physical-ai-textbook.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.physical-ai-textbook.com
+    description: Production server
+
+paths:
+  /chat:
+    post:
+      summary: Chat with the textbook assistant
+      description: Send a message to the RAG (Retrieval Augmented Generation) chatbot and receive a response based on textbook content
+      operationId: chatWithBot
+      tags:
+        - chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              message: "What are the key principles of humanoid robotics?"
+              session_id: "web-session-12345"
+      responses:
+        '200':
+          description: Successful response from the chatbot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                response: "Humanoid robotics is based on several key principles including: 1) Biomimetic design that mimics human movement patterns, 2) Balance and stability control systems, 3) Multi-modal sensory integration, and 4) Adaptive control algorithms that allow for real-world interaction."
+                message_id: "msg-67890"
+                sources: ["/docs/introduction-to-humanoid-robotics.md", "/docs/balance-control-systems.md"]
+                timestamp: "2025-12-19T10:30:00Z"
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+  /chat/health:
+    get:
+      summary: Health check for chatbot service
+      description: Check if the chatbot service is running and able to process requests
+      operationId: chatHealth
+      tags:
+        - chat
+      responses:
+        '200':
+          description: Health check successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '500':
+          description: Health check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+  /chat/session/{session_id}:
+    get:
+      summary: Get chat session details
+      description: Retrieve the details of a specific chat session
+      operationId: getChatSession
+      tags:
+        - chat
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the chat session to retrieve
+      responses:
+        '200':
+          description: Chat session details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    description: The ID of the chat session
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+    delete:
+      summary: Delete a chat session
+      description: Delete a specific chat session and its associated messages
+      operationId: deleteChatSession
+      tags:
+        - chat
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the chat session to delete
+      responses:
+        '200':
+          description: Chat session deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Confirmation message
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The user's message to the chatbot
+          example: "Explain the concept of inverse kinematics in humanoid robots"
+        session_id:
+          type: string
+          description: The ID of the chat session (optional, will be generated if not provided)
+          example: "web-session-12345"
+        user_id:
+          type: integer
+          description: The ID of the authenticated user (optional)
+          example: 123
+
+    ChatResponse:
+      type: object
+      required:
+        - response
+        - message_id
+        - timestamp
+      properties:
+        response:
+          type: string
+          description: The chatbot's response to the user's message
+          example: "Inverse kinematics in humanoid robots refers to the mathematical process of determining the joint angles required to achieve a desired position of the end effector (such as a hand or foot)..."
+        message_id:
+          type: string
+          description: Unique identifier for this response message
+          example: "msg-67890"
+        sources:
+          type: array
+          description: List of source documents used to generate the response
+          items:
+            type: string
+          example: ["/docs/kinematics.md", "/docs/humanoid-movement.md"]
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when the response was generated
+          example: "2025-12-19T10:30:00Z"
+
+    ChatMessage:
+      type: object
+      required:
+        - message_id
+        - content
+        - timestamp
+      properties:
+        message_id:
+          type: string
+          description: Unique identifier for the message
+        content:
+          type: string
+          description: The content of the message
+        sender_type:
+          type: string
+          enum: [user, bot]
+          description: Whether the message was sent by user or bot
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent
+        sources:
+          type: array
+          items:
+            type: string
+          description: Source documents referenced in the message (for bot responses)
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          description: Health status of the service
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of the health check
+          example: "2025-12-19T10:30:00Z"
+        version:
+          type: string
+          description: Version of the chat service
+          example: "1.0.0"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Description of the error
+          example: "Error processing chat request: Connection to vector database failed"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  # All chat endpoints are public, so no security by default
+  # Other endpoints can require authentication
+  - {}

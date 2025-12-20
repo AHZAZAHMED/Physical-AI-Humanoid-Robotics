@@ -6,14 +6,12 @@
 - [ ] Verify no 404 errors occur when accessing homepage
 - [ ] Test with different base URL configurations
 
-## Phase 2: RAG Pipeline Enhancement
-- [ ] Verify current state of Qdrant database and textbook indexing
-- [ ] Create script to process all .md and .mdx files in docs directory
-- [ ] Implement embedding generation for textbook content
-- [ ] Store embeddings in Qdrant with proper metadata
+## Phase 2: Chatbot Enhancement
+- [ ] Verify LLM service integration and functionality
+- [ ] Test current chatbot response quality
 - [ ] Update chatbot system prompt to provide detailed explanations
-- [ ] Test RAG responses with improved context usage
-- [ ] Verify source citations are still included in responses
+- [ ] Enhance response generation for educational value
+- [ ] Test chatbot responses for educational quality
 
 ## Phase 3: Authentication Implementation
 - [ ] Install and configure Better-Auth package
@@ -45,8 +43,8 @@
 ## Testing Checklist
 - [ ] Homepage redirects properly to content
 - [ ] No 404 errors on main routes
-- [ ] Chatbot provides detailed answers with citations
-- [ ] All textbook content is indexed in RAG
+- [ ] Chatbot provides detailed educational responses
+- [ ] Chatbot responses are helpful for textbook learning
 - [ ] Authentication works correctly
 - [ ] Registration collects required background info
 - [ ] Personalization adjusts content appropriately

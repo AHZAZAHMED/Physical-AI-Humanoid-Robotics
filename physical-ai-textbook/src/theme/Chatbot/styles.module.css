@@ -76,6 +76,45 @@
   font-weight: 600;
 }
 
+.chatHeaderContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.connectionIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* 4px */
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500;
+}
+
+.connectionDot {
+  width: 0.5rem; /* 8px */
+  height: 0.5rem; /* 8px */
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.connectionText {
+  white-space: nowrap;
+}
+
+/* Connection status colors */
+.connectionIndicator.connected .connectionDot {
+  background-color: #10b981; /* green-500 */
+}
+
+.connectionIndicator.disconnected .connectionDot {
+  background-color: #ef4444; /* red-500 */
+}
+
+.connectionIndicator.error .connectionDot {
+  background-color: #f59e0b; /* amber-500 */
+}
+
 .chatHeader.light {
   background-color: #f3f4f6; /* gray-100 */
   border-bottom-color: #e5e7eb; /* gray-200 */
