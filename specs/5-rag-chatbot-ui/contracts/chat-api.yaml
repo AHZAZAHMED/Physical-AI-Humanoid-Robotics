@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: RAG Chatbot API
+  description: API for integrating the RAG backend with the frontend chatbot UI
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /api/chat:
+    post:
+      summary: Process a user query and return a RAG-enhanced response
+      description: Sends a user query to the RAG agent and returns an AI-generated response with citations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response from the RAG agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/health:
+    get:
+      summary: Check the health status of the backend service
+      description: Returns the health status of the backend service and its dependencies
+      responses:
+        '200':
+          description: Health status information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '500':
+          description: Health check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: The user's query text
+          example: "What is Physical AI and Humanoid Robotics?"
+          maxLength: 1000
+        sessionId:
+          type: string
+          description: Identifier for conversation continuity
+          example: "abc123def456"
+          pattern: "^[a-zA-Z0-9-_]+$"
+        userId:
+          type: string
+          description: Identifier for user (if authentication is implemented)
+          example: "user123"
+          pattern: "^[a-zA-Z0-9-_]+$"
+
+    ChatResponse:
+      type: object
+      required:
+        - response
+        - sessionId
+        - timestamp
+      properties:
+        response:
+          type: string
+          description: The AI-generated response text
+          example: "Physical AI and Humanoid Robotics refers to the field dedicated to developing embodied intelligence..."
+        sources:
+          type: array
+          description: Citations from the RAG system
+          items:
+            $ref: '#/components/schemas/Source'
+        sessionId:
+          type: string
+          description: Identifier for conversation continuity
+          example: "abc123def456"
+          pattern: "^[a-zA-Z0-9-_]+$"
+        error:
+          $ref: '#/components/schemas/ErrorResponse'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+          example: "2026-01-13T06:18:07.456Z"
+
+    Source:
+      type: object
+      required:
+        - content
+        - metadata
+      properties:
+        content:
+          type: string
+          description: The content that was referenced
+          example: "Theoretical Foundations The theoretical underpinnings of Physical AI draw from several disciplines..."
+        metadata:
+          type: object
+          description: Additional information about the source
+          additionalProperties: true
+          example:
+            book_title: "Physical AI & Humanoid Robotics Textbook"
+            chapter: "Unknown Chapter"
+            section: "Unknown Section"
+        similarityScore:
+          type: number
+          description: How closely the source matches the query
+          minimum: 0
+          maximum: 1
+          example: 0.95
+        bookTitle:
+          type: string
+          description: Title of the book the source came from
+          example: "Physical AI & Humanoid Robotics Textbook"
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "No relevant content found in the book for the given query"
+        type:
+          type: string
+          description: Type of error
+          example: "InsufficientContextError"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Overall health status
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the check was performed
+          example: "2026-01-13T06:18:07.456Z"
+        services:
+          type: object
+          description: Status of individual services
+          additionalProperties:
+            type: string
+            enum: [operational, degraded, unavailable]
+          example:
+            qdrant: operational
+            gemini: operational
+            cohere: operational

@@ -34,13 +34,88 @@ html[data-theme='dark'] .docusaurus-highlight-code-line {
 }
 
 .hero__title {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .hero__subtitle {
   font-size: 1.5rem;
   opacity: 0.9;
+  margin-bottom: 1.5rem;
+}
+
+.text--large {
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.text--bold {
+  font-weight: 600;
+}
+
+.text--normal {
+  font-weight: 400;
+}
+
+.button--cta {
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.button--cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.padding-vert--xl {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.module-card {
+  transition: all 0.3s ease;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+}
+
+.module-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.module-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ifm-color-primary);
+}
+
+.button--block {
+  display: block;
+  width: 100%;
+}
+
+/* Chatbot UI adjustments */
+.chatbox-container {
+  width: 380px; /* Reduced width */
+  height: 500px; /* Reduced height */
+  margin-right: 20px;
+  margin-bottom: 100px; /* Increased bottom margin to avoid navbar overlap */
+  z-index: 1000; /* Ensure it stays above other elements */
+}
+
+.chatbox-overlay {
+  z-index: 1001; /* Higher z-index to ensure visibility */
 }
 
 /* Custom sidebar styles */

@@ -11,18 +11,23 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://ahzaz.github.io',
+  url: 'https://ahzazahmed.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/physical-ai-textbook/',
+  baseUrl: '/Physical-AI-Humanoid-Robotics/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'ahzaz', // Usually your GitHub org/user name.
-  projectName: 'physical-ai-textbook', // Usually your repo name.
+  organizationName: 'ahzazahmed', // Usually your GitHub org/user name.
+  projectName: 'Physical-AI-Humanoid-Robotics', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    }
+  },
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -51,18 +56,6 @@ const config = {
   ],
 
   plugins: [
-    // Plugin to redirect from root path to docs
-    [
-      '@docusaurus/plugin-client-redirects',
-      {
-        redirects: [
-          {
-            to: '/docs/intro', // Redirect to the intro page of docs
-            from: '/', // Redirect from site root
-          },
-        ],
-      },
-    ],
   ],
 
   themeConfig:
@@ -89,7 +82,7 @@ const config = {
             position: 'right',
           },
           {
-            href: 'https://github.com/AHZAZAHMED/physical-ai-textbook',
+            href: 'https://github.com/ahzazahmed/Physical-AI-Humanoid-Robotics',
             label: 'GitHub',
             position: 'right',
           },
@@ -112,7 +105,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/AHZAZAHMED/physical-ai-textbook',
+                href: 'https://github.com/ahzazahmed/Physical-AI-Humanoid-Robotics',
               },
             ],
           },
@@ -121,7 +114,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/AHZAZAHMED/physical-ai-textbook',
+                href: 'https://github.com/ahzazahmed/Physical-AI-Humanoid-Robotics',
               },
             ],
           },
