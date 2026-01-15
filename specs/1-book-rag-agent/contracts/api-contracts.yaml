@@ -1,0 +1,197 @@
+# API Contracts: Agent-based RAG Reasoning Flow
+
+## Query Processing API
+
+### Endpoint: Process Query
+- **Method**: POST
+- **Path**: `/api/v1/query`
+- **Description**: Processes a user query through the RAG pipeline and returns a grounded response
+
+#### Request
+```yaml
+{
+  "query": "string",                    # The user's query text
+  "parameters": {                       # Optional configuration parameters
+    "top_k": 5,                        # Number of results to retrieve (1-20)
+    "confidence_threshold": 0.7,       # Minimum similarity score (0.0-1.0)
+    "include_metadata": true           # Whether to include metadata in results
+  }
+}
+```
+
+#### Response (Success - 200)
+```yaml
+{
+  "response_id": "string",              # Unique identifier for the response
+  "query_id": "string",                 # Reference to the original query
+  "response": "string",                 # The generated response text
+  "sources": [                          # List of sources used in the response
+    {
+      "content": "string",              # Content of the retrieved chunk
+      "source": {
+        "book": "string",               # Book title
+        "chapter": "string",            # Chapter name/number
+        "section": "string",            # Section name/number
+        "page": 0                       # Page number
+      },
+      "similarity_score": 0.85,         # Similarity score (0.0-1.0)
+      "confidence_score": 0.82          # Confidence in relevance (0.0-1.0)
+    }
+  ],
+  "grounding_confidence": 0.95,         # Confidence response is grounded (0.0-1.0)
+  "response_time_ms": 1200,             # Time taken in milliseconds
+  "timestamp": "2025-12-27T10:30:00Z"   # Timestamp of response
+}
+```
+
+#### Response (Insufficient Context - 422)
+```yaml
+{
+  "error": "insufficient_context",
+  "message": "No relevant content found in the book for the given query",
+  "query_id": "string",
+  "timestamp": "2025-12-27T10:30:00Z"
+}
+```
+
+#### Response (Validation Error - 400)
+```yaml
+{
+  "error": "validation_error",
+  "message": "Invalid query format or parameters",
+  "details": {
+    "query": ["Query must not be empty", "Query must be less than 1000 characters"],
+    "parameters": {
+      "top_k": ["Top K must be between 1 and 20"]
+    }
+  },
+  "timestamp": "2025-12-27T10:30:00Z"
+}
+```
+
+#### Response (Server Error - 500)
+```yaml
+{
+  "error": "internal_server_error",
+  "message": "An unexpected error occurred during query processing",
+  "timestamp": "2025-12-27T10:30:00Z"
+}
+```
+
+## Configuration API
+
+### Endpoint: Get Default Configuration
+- **Method**: GET
+- **Path**: `/api/v1/config`
+- **Description**: Retrieves the current system configuration
+
+#### Response (Success - 200)
+```yaml
+{
+  "default_top_k": 5,
+  "default_confidence_threshold": 0.7,
+  "max_query_length": 1000,
+  "max_context_length": 2000,
+  "agent_model": "gpt-4-turbo",
+  "embedding_model": "text-embedding-ada-002",
+  "max_retries": 3,
+  "timeout_seconds": 30,
+  "timestamp": "2025-12-27T10:30:00Z"
+}
+```
+
+### Endpoint: Update Configuration
+- **Method**: PUT
+- **Path**: `/api/v1/config`
+- **Description**: Updates the system configuration
+
+#### Request
+```yaml
+{
+  "default_top_k": 7,
+  "default_confidence_threshold": 0.65,
+  "agent_model": "gpt-4-turbo"
+}
+```
+
+## Health Check API
+
+### Endpoint: Health Check
+- **Method**: GET
+- **Path**: `/api/v1/health`
+- **Description**: Checks the health status of the service and its dependencies
+
+#### Response (Success - 200)
+```yaml
+{
+  "status": "healthy",
+  "timestamp": "2025-12-27T10:30:00Z",
+  "dependencies": {
+    "qdrant": {
+      "status": "connected",
+      "response_time_ms": 15
+    },
+    "openai": {
+      "status": "connected",
+      "response_time_ms": 250
+    }
+  }
+}
+```
+
+## Statistics API
+
+### Endpoint: Get Usage Statistics
+- **Method**: GET
+- **Path**: `/api/v1/stats`
+- **Description**: Retrieves usage statistics and performance metrics
+
+#### Response (Success - 200)
+```yaml
+{
+  "total_queries": 1500,
+  "successful_responses": 1450,
+  "insufficient_context": 45,
+  "avg_response_time_ms": 1100,
+  "p95_response_time_ms": 1800,
+  "grounding_accuracy": 0.96,
+  "timestamp": "2025-12-27T10:30:00Z"
+}
+```
+
+## Error Handling
+
+### Standard Error Format
+All error responses follow this format:
+```yaml
+{
+  "error": "error_code",
+  "message": "Human-readable error message",
+  "timestamp": "ISO 8601 timestamp",
+  "request_id": "string"  # Optional: ID for tracking the request
+}
+```
+
+### Common Error Codes
+- `validation_error`: Request parameters failed validation
+- `insufficient_context`: No relevant content found for the query
+- `embedding_error`: Failed to generate query embedding
+- `search_error`: Failed to retrieve content from vector database
+- `generation_error`: Failed to generate response from agent
+- `internal_server_error`: Unexpected server error
+- `dependency_error`: External service unavailable
+- `timeout_error`: Request timed out
+
+## Authentication
+All API endpoints require authentication using API key in the header:
+```
+Authorization: Bearer {api_key}
+```
+
+## Rate Limiting
+- Default rate limit: 100 requests per minute per API key
+- Burst limit: 10 requests
+- Response headers include rate limit information:
+  - `X-RateLimit-Limit`: Request limit per time window
+  - `X-RateLimit-Remaining`: Remaining requests in current window
+  - `X-RateLimit-Reset`: Time when the current window resets
