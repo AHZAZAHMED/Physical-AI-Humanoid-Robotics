@@ -88,12 +88,26 @@ class AgentConnector:
             # Get the agent (lazy loading)
             agent = self._get_agent()
 
-            # Apply nest_asyncio to handle the nested event loop issue
-            import nest_asyncio
-            nest_asyncio.apply()
 
             # Process the query through the RAG agent
-            response = agent.process_query(chat_request.query)
+            # For async methods, we need to handle them properly without nest_asyncio
+            import asyncio
+
+            # Check if the method is async
+            if asyncio.iscoroutinefunction(agent.process_query):
+                # If it's a coroutine, run it properly in the current event loop
+                try:
+                    loop = asyncio.get_running_loop()
+                    # If we're already in a loop, run in executor or create task
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        response = executor.submit(lambda: agent.process_query(chat_request.query)).result()
+                except RuntimeError:
+                    # No event loop running, safe to use asyncio.run
+                    response = asyncio.run(agent.process_query(chat_request.query))
+            else:
+                # If it's not async, call directly
+                response = agent.process_query(chat_request.query)
 
             # Format the response according to our schema
             sources = []
