@@ -88,10 +88,6 @@ class AgentConnector:
             # Get the agent (lazy loading)
             agent = self._get_agent()
 
-            # Apply nest_asyncio to handle the nested event loop issue
-            import nest_asyncio
-            nest_asyncio.apply()
-
             # Process the query through the RAG agent
             response = agent.process_query(chat_request.query)
 
