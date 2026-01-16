@@ -17,7 +17,7 @@ function Root({ children }) {
   const handleSendMessage = async (message) => {
     try {
       // Send message to backend API
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch('https://physical-ai-humanoid-robotics-6.onrender.com/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
