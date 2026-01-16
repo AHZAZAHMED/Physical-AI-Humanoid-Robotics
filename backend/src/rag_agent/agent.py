@@ -356,8 +356,18 @@ class RAGAgent:
                 stats_service = get_stats_service()
                 stats_service.record_query(metrics)
 
-                log_query_error(rag_logger, query_id, InsufficientContextError("No relevant content found in the book for the given query"), response_time_ms)
-                raise InsufficientContextError("No relevant content found in the book for the given query")
+                error_msg = "No relevant content found in the book for the given query"
+                # Check if this is due to Qdrant connection issue
+                try:
+                    # Attempt to check if collection exists
+                    collection_exists = self.qdrant_service.health_check()
+                    if not collection_exists:
+                        error_msg = "Qdrant connection issue: unable to access collection or collection doesn't exist"
+                except Exception:
+                    error_msg = "Qdrant connection issue: unable to access collection or collection doesn't exist"
+
+                log_query_error(rag_logger, query_id, InsufficientContextError(error_msg), response_time_ms)
+                raise InsufficientContextError(error_msg)
 
             # 4. Format context for the LLM
             context = self._format_context_for_agent(retrieved_chunks)

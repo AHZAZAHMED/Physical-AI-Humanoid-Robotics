@@ -104,16 +104,28 @@ class QdrantService:
             if filter_conditions:
                 search_filter = models.Filter(must=filter_conditions)
 
-        # Perform search
-        results = self.client.search(
-            collection_name=self.collection_name,
-            query_vector=query_vector,
-            limit=top_k * 2,  # Get more results to account for filtering
-            query_filter=search_filter,
-            with_payload=True,
-            with_vectors=False,
-            score_threshold=confidence_threshold
-        )
+        # Perform search - use points_api for newer versions if direct search fails
+        try:
+            results = self.client.search(
+                collection_name=self.collection_name,
+                query_vector=query_vector,
+                limit=top_k * 2,  # Get more results to account for filtering
+                query_filter=search_filter,
+                with_payload=True,
+                with_vectors=False,
+                score_threshold=confidence_threshold
+            )
+        except AttributeError:
+            # Fallback for older API versions or different client configurations
+            results = self.client.search_points(
+                collection_name=self.collection_name,
+                query_vector=query_vector,
+                limit=top_k * 2,  # Get more results to account for filtering
+                query_filter=search_filter,
+                with_payload=True,
+                with_vectors=False,
+                score_threshold=confidence_threshold
+            )
 
         # Filter results based on confidence threshold and return formatted results
         filtered_results = []
@@ -149,7 +161,13 @@ class QdrantService:
             self.client.get_collection(self.collection_name)
             return True
         except Exception:
-            return False
+            # Try to ping the server to check if it's accessible at all
+            try:
+                # Check if the client itself is responsive
+                self.client.get_collections()
+                return True  # Server is accessible but collection may not exist
+            except Exception:
+                return False  # Server is not accessible
 
     def search_with_inference(
         self,
