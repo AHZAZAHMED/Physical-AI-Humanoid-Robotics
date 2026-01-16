@@ -32,18 +32,18 @@ try:
 except ImportError:
     # Fallback for direct execution - add project root to path
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-    from config import AgentConfiguration
-    from clients.qdrant_client import QdrantService
-    from clients.openai_client import OpenAIService
-    from models.query import Query
-    from models.retrieved_chunk import RetrievedChunk
-    from models.generated_response import GeneratedResponse
-    from exceptions import (
+    from src.rag_agent.config import AgentConfiguration
+    from src.rag_agent.clients.qdrant_client import QdrantService
+    from src.rag_agent.clients.openai_client import OpenAIService
+    from src.rag_agent.models.query import Query
+    from src.rag_agent.models.retrieved_chunk import RetrievedChunk
+    from src.rag_agent.models.generated_response import GeneratedResponse
+    from src.rag_agent.exceptions import (
         EmbeddingError, SearchError, GenerationError,
         ValidationError, GroundingError, InsufficientContextError
     )
-    from utils.logging import rag_logger
-    from services.stats_service import get_stats_service, QueryMetrics
+    from src.rag_agent.utils.logging import rag_logger
+    from src.rag_agent.services.stats_service import get_stats_service, QueryMetrics
 
 # Import modern OpenAI SDK for function calling and Google Generative AI
 from openai import OpenAI
